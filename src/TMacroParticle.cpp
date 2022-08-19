@@ -1,8 +1,9 @@
+#include "TMacroParticle.hpp"
+
 #include <TTree.h>
 
 #include "TBlockPointMesh.hpp"
 #include "TBlockPointVar.hpp"
-#include "TMacroParticle.hpp"
 
 using std::cout;
 using std::endl;
@@ -17,6 +18,9 @@ TMacroParticle::TMacroParticle(TSDFReader *reader, TString parName)
       fVx(nullptr),
       fVy(nullptr),
       fVz(nullptr),
+      fTIWx(nullptr),
+      fTIWy(nullptr),
+      fTIWz(nullptr),
       fEk(nullptr),
       fWeight(nullptr),
       fOptDep(nullptr),
@@ -49,6 +53,10 @@ void TMacroParticle::FindVar()
   fVy = FindBlockPointVar("vy/" + fParName);
   fVz = FindBlockPointVar("vz/" + fParName);
 
+  fTIWx = FindBlockPointVar("time_integrated_work_x/" + fParName);
+  fTIWy = FindBlockPointVar("time_integrated_work_y/" + fParName);
+  fTIWz = FindBlockPointVar("time_integrated_work_z/" + fParName);
+
   fEk = FindBlockPointVar("ek/" + fParName);
 
   fWeight = FindBlockPointVar("weight/" + fParName);
@@ -62,7 +70,8 @@ void TMacroParticle::FindVar()
 
 TBlockPointVar *TMacroParticle::FindBlockPointVar(TString id)
 {
-  Int_t index = fReader->GetBlockIndex(id);
+  id = "particles/" + id;
+  Int_t index = fReader->GetBlockIndexByName(id);
   if (index < 0) return nullptr;
   TBlockPointVar *block = (TBlockPointVar *)fReader->fBlock[index];
   block->ReadMetadata();
@@ -87,6 +96,7 @@ void TMacroParticle::MakeTree()
     tree->Branch("y", &y, "y/D");
     tree->Branch("z", &z, "z/D");
   }
+
   // Momentum
   Double_t Px;
   if (fPx) tree->Branch("Px", &Px, "Px/D");
@@ -102,6 +112,14 @@ void TMacroParticle::MakeTree()
   if (fVy) tree->Branch("Vy", &Vy, "Vy/D");
   Double_t Vz;
   if (fVz) tree->Branch("Vz", &Vz, "Vz/D");
+
+  // Time Integrated Work
+  Double_t TIWx;
+  if (fTIWx) tree->Branch("TIWx", &TIWx, "TIWx/D");
+  Double_t TIWy;
+  if (fTIWy) tree->Branch("TIWy", &TIWy, "TIWy/D");
+  Double_t TIWz;
+  if (fTIWz) tree->Branch("TIWz", &TIWz, "TIWz/D");
 
   // Kinetic energy
   Double_t Ek;
@@ -124,8 +142,12 @@ void TMacroParticle::MakeTree()
   Long64_t id;
   if (fID) tree->Branch("ID", &id, "ID/L");
 
-  const Long64_t kNoPar = fPx->GetDataSize();
-  cout << kNoPar << endl;
+  Long64_t kNoPar = 0;
+  if (fPx)
+    kNoPar = fPx->GetDataSize();
+  else if (fTIWx)
+    kNoPar = fTIWx->GetDataSize();
+
   for (Long64_t i = 0; i < kNoPar; i++) {
     if (i % 1000000 == 0)
       cout << i << " / " << kNoPar << " (" << i * 100. / kNoPar << " %)"
@@ -138,6 +160,10 @@ void TMacroParticle::MakeTree()
     if (fVx) Vx = fVx->GetData(i);
     if (fVy) Vy = fVy->GetData(i);
     if (fVz) Vz = fVz->GetData(i);
+
+    if (fTIWx) TIWx = fTIWx->GetData(i);
+    if (fTIWy) TIWy = fTIWy->GetData(i);
+    if (fTIWz) TIWz = fTIWz->GetData(i);
 
     if (fEk) Ek = fEk->GetData(i);
 
@@ -156,6 +182,7 @@ void TMacroParticle::MakeTree()
     }
     tree->Fill();
   }
+  cout << kNoPar << " events done." << endl;
 
   tree->Write();
   delete tree;

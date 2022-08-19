@@ -3,16 +3,17 @@
  Almost variable names are same as file format description.
 */
 
-#include <iostream>
+#include "TSDFReader.hpp"
 
 #include <TString.h>
+
+#include <iostream>
 
 #include "TBlock.hpp"
 #include "TBlockPlainMesh.hpp"
 #include "TBlockPlainVar.hpp"
 #include "TBlockPointMesh.hpp"
 #include "TBlockPointVar.hpp"
-#include "TSDFReader.hpp"
 
 using std::cout;
 using std::endl;
@@ -164,8 +165,8 @@ void TSDFReader::LoadBlocks()
         break;
     }
     fBlock[i + 1]->ReadMetadata();
-    // fBlock[i + 1]->PrintHeader();
-    // fBlock[i + 1]->PrintMetadata();
+    fBlock[i + 1]->PrintHeader();
+    fBlock[i + 1]->PrintMetadata();
   }
 }
 
@@ -184,6 +185,21 @@ Int_t TSDFReader::GetBlockIndex(TString ID)
   ID.ReplaceAll(" ", "");  // Sanitize.  I should do partial match searching?
   for (Int_t i = 0; i < GetNBlocks(); i++) {
     TString blockID = fBlock[i]->GetID();
+    blockID.ToLower();
+    blockID.ReplaceAll(" ", "");  // Sanitize
+
+    if (ID == blockID) return i;
+  }
+
+  return -1;
+}
+
+Int_t TSDFReader::GetBlockIndexByName(TString ID)
+{
+  ID.ToLower();
+  ID.ReplaceAll(" ", "");  // Sanitize.  I should do partial match searching?
+  for (Int_t i = 0; i < GetNBlocks(); i++) {
+    TString blockID = fBlock[i]->GetName();
     blockID.ToLower();
     blockID.ReplaceAll(" ", "");  // Sanitize
 

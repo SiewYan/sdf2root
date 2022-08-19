@@ -38,6 +38,10 @@ class TMacroParticle
   TBlockPointVar *fVy;
   TBlockPointVar *fVz;
 
+  TBlockPointVar *fTIWx;  // Time_Integrated_Work_x
+  TBlockPointVar *fTIWy;
+  TBlockPointVar *fTIWz;
+
   TBlockPointVar *fEk;  // What is the E? this block shows the kinetic ene.
 
   TBlockPointVar *fWeight;

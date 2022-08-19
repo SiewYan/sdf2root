@@ -1,10 +1,10 @@
 #ifndef TSDFREADER
 #define TSDFREADER 1
 
+#include <TString.h>
+
 #include <fstream>
 #include <vector>
-
-#include <TString.h>
 
 #include "TBlock.hpp"
 
@@ -30,6 +30,7 @@ class TSDFReader
   Double_t GetTime() { return fTime; };
 
   Int_t GetBlockIndex(TString ID);
+  Int_t GetBlockIndexByName(TString ID);
 
  private:
   void LoadBlocks();

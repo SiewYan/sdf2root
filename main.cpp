@@ -1,6 +1,6 @@
-#include <iostream>
-
 #include <TString.h>
+
+#include <iostream>
 
 #include "RunMode.hpp"
 #include "TConverter.hpp"
