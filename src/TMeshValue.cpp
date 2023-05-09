@@ -83,13 +83,14 @@ void TMeshValue::GetMeshData()
 {
    for(auto &mesh: fMeshList){
       if(mesh.Use == kTRUE){
-         cout << mesh.ID <<"\t"<< mesh.Name <<"\t"<< mesh.Title << endl;
-         GetMeshHis(mesh.ID, mesh.Name, mesh.Title);
+	cout << "Gettting " << mesh.ID <<"\t"<< mesh.Name <<"\t"<< mesh.Title << endl;
+	GetMeshHis(mesh.ID, mesh.Name, mesh.Title);
       }
    }
 
 }
 
+// this is where you make histo
 void TMeshValue::GetMeshHis(TString id, TString hisName, TString hisTitle)
 {
    TH1 *his{nullptr};
@@ -157,6 +158,7 @@ void TMeshValue::GetMeshHis(TString id, TString hisName, TString hisTitle)
       his->SetXTitle(fHisLabel[0] + " [" + fHisUnit[0] + "]");
       for(Int_t x = 1; x <= nBins[0]; x++){
          his->SetBinContent(x, norm * block->GetData(x - 1));
+	 std::cout<<"x : "<< x << " ; norm : " << norm << " ; block->GetData(x - 1) : " << block->GetData(x - 1) << " ; tot : " << norm * block->GetData(x - 1) << std::endl;
       }
    }
    else if(dim == 2){
