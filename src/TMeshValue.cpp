@@ -8,6 +8,7 @@
 #include "TBlockPlainMesh.hpp"
 #include "TBlockPlainVar.hpp"
 
+#include "TStyle.h"
 
 using std::cout;
 using std::endl;
@@ -93,109 +94,137 @@ void TMeshValue::GetMeshData()
 // this is where you make histo
 void TMeshValue::GetMeshHis(TString id, TString hisName, TString hisTitle)
 {
-   TH1 *his{nullptr};
 
-   Int_t index = fReader->GetBlockIndex(id);
-   if(index < 0) return;
-
-   ReadMeshGrid("grid/" + id);
-   
-   TBlockPlainVar *block = (TBlockPlainVar*)fReader->fBlock[index];
-   block->ReadData();
-
-   TString name = hisName;
-   TString title = hisTitle;
-   Double_t norm = block->GetNormFactor();
-
-   Int_t nBins[3] = {
-      block->GetNGrids(0),
-      block->GetNGrids(1),
-      block->GetNGrids(2),
-   };
-   
-   Int_t stagger = block->GetStagger();
-   Int_t dim = block->GetNDims();
-   
-   Double_t delta[3] = {
-      fHisBinWidth[0] / 2.,
-      fHisBinWidth[1] / 2.,
-      fHisBinWidth[2] / 2.,      
-   };
-
-   // stagger.  Don't use bit mask.  Use number
-   // Check, is this right or not.
-   Double_t shift[3] = {0., 0., 0.};
-   if(stagger == 1)
-      shift[0] += delta[0];
-   else if(stagger == 2)
-      shift[1] += delta[1];
-   else if(stagger == 4)
-      shift[2] += delta[2];
-   else if(stagger == 3){
-      shift[0] += delta[0];
-      shift[1] += delta[1];
-   }   
-   else if(stagger == 5){
-      shift[0] += delta[0];
-      shift[2] += delta[2];
-   }   
-   else if(stagger == 6){
-      shift[1] += delta[1];
-      shift[2] += delta[2];
-   }   
-   else if(stagger == 7){
-      shift[0] += delta[0];
-      shift[1] += delta[1];
-      shift[2] += delta[2];
-   }
-   else if(stagger != 0){
-      cout << "stagger error: " << stagger << endl;
-   }
-   
-   if(dim == 1){
-      his = new TH1D(name, title,
-                     nBins[0], fHisMin[0] - delta[0] + shift[0], fHisMax[0] + delta[0] + shift[0]);
-      his->SetXTitle(fHisLabel[0] + " [" + fHisUnit[0] + "]");
-      for(Int_t x = 1; x <= nBins[0]; x++){
-         his->SetBinContent(x, norm * block->GetData(x - 1));
-	 std::cout<<"x : "<< x << " ; norm : " << norm << " ; block->GetData(x - 1) : " << block->GetData(x - 1) << " ; tot : " << norm * block->GetData(x - 1) << std::endl;
+  TStyle* gStyle;
+  gStyle = new TStyle();
+  gStyle->SetOptStat(0);
+  
+  TH1 *his{nullptr};
+  
+  Int_t index = fReader->GetBlockIndex(id);
+  if(index < 0) return;
+  
+  ReadMeshGrid("grid/" + id);
+  
+  TBlockPlainVar *block = (TBlockPlainVar*)fReader->fBlock[index];
+  block->ReadData();
+  
+  TString name = hisName;
+  TString title = hisTitle;
+  Double_t norm = block->GetNormFactor();
+  
+  Int_t nBins[3] = {
+    block->GetNGrids(0),
+    block->GetNGrids(1),
+    block->GetNGrids(2),
+  };
+  
+  Int_t stagger = block->GetStagger();
+  Int_t dim = block->GetNDims();
+  
+  Double_t delta[3] = {
+    fHisBinWidth[0] / 2.,
+    fHisBinWidth[1] / 2.,
+    fHisBinWidth[2] / 2.,      
+  };
+  
+  // stagger.  Don't use bit mask.  Use number
+  // Check, is this right or not.
+  Double_t shift[3] = {0., 0., 0.};
+  if(stagger == 1)
+    shift[0] += delta[0];
+  else if(stagger == 2)
+    shift[1] += delta[1];
+  else if(stagger == 4)
+    shift[2] += delta[2];
+  else if(stagger == 3){
+    shift[0] += delta[0];
+    shift[1] += delta[1];
+  }   
+  else if(stagger == 5){
+    shift[0] += delta[0];
+    shift[2] += delta[2];
+  }   
+  else if(stagger == 6){
+    shift[1] += delta[1];
+    shift[2] += delta[2];
+  }   
+  else if(stagger == 7){
+    shift[0] += delta[0];
+    shift[1] += delta[1];
+    shift[2] += delta[2];
+  }
+  else if(stagger != 0){
+    cout << "stagger error: " << stagger << endl;
+  }
+  
+  Double_t MEV=1.;
+  if(dim == 1){
+    TString Unit=fHisUnit[0];
+    
+    // Energy
+    std::cout<<" ID : "<< id <<std::endl;
+    if ( id.Contains("en") ){
+      MEV= 1.6e-19 * 1.0e6;
+      Unit="MeV";
+    }
+    
+    his = new TH1D(name, title,
+		   nBins[0], (fHisMin[0] - delta[0] + shift[0]) / MEV , (fHisMax[0] + delta[0] + shift[0]) / MEV );
+    
+    //his->SetXTitle(fHisLabel[0] + " [" + fHisUnit[0] + "]");
+    his->SetXTitle(fHisLabel[0] + " [" + Unit + "]");
+    his->SetYTitle("a.u.");
+    
+    for(Int_t x = 1; x <= nBins[0]; x++){
+      his->SetBinContent(x, norm * block->GetData(x - 1) / MEV);
+    }
+  }
+  else if(dim == 2){
+    Double_t MICRON=1.;
+    TString UnitX=fHisUnit[0];
+    TString UnitY=fHisUnit[1];
+    
+    if ( !id.Contains("px_x") ){
+      MICRON=1.0e6; // meter to micron
+      UnitX="#mum";
+      UnitY="#mum";
+    }
+    
+    his = new TH2D(name, title,
+		   nBins[0], (fHisMin[0] - delta[0] + shift[0]) * MICRON , (fHisMax[0] + delta[0] + shift[0]) * MICRON ,
+		   nBins[1], (fHisMin[1] - delta[1] + shift[1]) * MICRON , (fHisMax[1] + delta[1] + shift[1]) * MICRON );
+    his->SetXTitle(fHisLabel[0] + " [" + UnitX + "]");
+    his->SetYTitle(fHisLabel[1] + " [" + UnitY + "]");
+    for(Int_t x = 1; x <= nBins[0]; x++){
+      for(Int_t y = 1; y <= nBins[1]; y++){
+	Int_t i = (x - 1) + ((y - 1) * nBins[0]);
+	his->SetBinContent( x , y , norm * block->GetData(i) * (MICRON * MICRON) );
       }
-   }
-   else if(dim == 2){
-      his = new TH2D(name, title,
-                     nBins[0], fHisMin[0] - delta[0] + shift[0], fHisMax[0] + delta[0] + shift[0],
-                     nBins[1], fHisMin[1] - delta[1] + shift[1], fHisMax[1] + delta[1] + shift[1]);
-      his->SetXTitle(fHisLabel[0] + " [" + fHisUnit[0] + "]");
-      his->SetYTitle(fHisLabel[1] + " [" + fHisUnit[1] + "]");
-      for(Int_t x = 1; x <= nBins[0]; x++){
-         for(Int_t y = 1; y <= nBins[1]; y++){
-            Int_t i = (x - 1) + ((y - 1) * nBins[0]);
-            his->SetBinContent(x, y, norm * block->GetData(i));
-         }
+    }
+  }
+  else if(dim == 3){ // TH3D makes size error of something... I should check whats happen
+    his = new TH3F(name, title,
+		   nBins[0], fHisMin[0] - delta[0] + shift[0], fHisMax[0] + delta[0] + shift[0],
+		   nBins[1], fHisMin[1] - delta[1] + shift[1], fHisMax[1] + delta[1] + shift[1],
+		   nBins[2], fHisMin[2] - delta[2] + shift[2], fHisMax[2] + delta[2] + shift[2]);
+    his->SetXTitle(fHisLabel[0] + " [" + fHisUnit[0] + "]");
+    his->SetYTitle(fHisLabel[1] + " [" + fHisUnit[1] + "]");
+    his->SetZTitle(fHisLabel[2] + " [" + fHisUnit[2] + "]");
+    for(Int_t x = 1; x <= nBins[0]; x++){
+      for(Int_t y = 1; y <= nBins[1]; y++){
+	for(Int_t z = 1; z <= nBins[2]; z++){
+	  Int_t i = (x - 1) + ((y - 1) * nBins[0]) + ((z - 1) * nBins[0] * nBins[1]);
+	  his->SetBinContent(x, y, z, Float_t(norm * block->GetData(i)));
+	}
       }
-   }
-   else if(dim == 3){ // TH3D makes size error of something... I should check whats happen
-      his = new TH3F(name, title,
-                     nBins[0], fHisMin[0] - delta[0] + shift[0], fHisMax[0] + delta[0] + shift[0],
-                     nBins[1], fHisMin[1] - delta[1] + shift[1], fHisMax[1] + delta[1] + shift[1],
-                     nBins[2], fHisMin[2] - delta[2] + shift[2], fHisMax[2] + delta[2] + shift[2]);
-      his->SetXTitle(fHisLabel[0] + " [" + fHisUnit[0] + "]");
-      his->SetYTitle(fHisLabel[1] + " [" + fHisUnit[1] + "]");
-      his->SetZTitle(fHisLabel[2] + " [" + fHisUnit[2] + "]");
-      for(Int_t x = 1; x <= nBins[0]; x++){
-         for(Int_t y = 1; y <= nBins[1]; y++){
-            for(Int_t z = 1; z <= nBins[2]; z++){
-               Int_t i = (x - 1) + ((y - 1) * nBins[0]) + ((z - 1) * nBins[0] * nBins[1]);
-               his->SetBinContent(x, y, z, Float_t(norm * block->GetData(i)));
-            }
-         }
-      }
-   }
-
-   //block->PrintHeader();
-   //block->PrintMetadata();
-
-   his->Write();
-   delete his;
+    }
+  }
+  
+  //block->PrintHeader();
+  //block->PrintMetadata();
+  
+  his->Write();
+  delete his;
 }
 
