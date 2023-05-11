@@ -165,8 +165,8 @@ void TSDFReader::LoadBlocks()
         break;
     }
     fBlock[i + 1]->ReadMetadata();
-    fBlock[i + 1]->PrintHeader();
-    fBlock[i + 1]->PrintMetadata();
+    //fBlock[i + 1]->PrintHeader();
+    //fBlock[i + 1]->PrintMetadata();
   }
 }
 

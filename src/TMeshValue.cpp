@@ -158,48 +158,28 @@ void TMeshValue::GetMeshHis(TString id, TString hisName, TString hisTitle)
     cout << "stagger error: " << stagger << endl;
   }
   
-  Double_t MEV=1.;
   if(dim == 1){
-    TString Unit=fHisUnit[0];
-    
-    // Energy
-    std::cout<<" ID : "<< id <<std::endl;
-    if ( id.Contains("en") ){
-      MEV= 1.6e-19 * 1.0e6;
-      Unit="MeV";
-    }
     
     his = new TH1D(name, title,
-		   nBins[0], (fHisMin[0] - delta[0] + shift[0]) / MEV , (fHisMax[0] + delta[0] + shift[0]) / MEV );
+		   nBins[0], (fHisMin[0] - delta[0] + shift[0]) , (fHisMax[0] + delta[0] + shift[0]) );
     
-    //his->SetXTitle(fHisLabel[0] + " [" + fHisUnit[0] + "]");
-    his->SetXTitle(fHisLabel[0] + " [" + Unit + "]");
-    his->SetYTitle("a.u.");
+    his->SetXTitle(fHisLabel[0] + " [" + fHisUnit[0] + "]");
     
     for(Int_t x = 1; x <= nBins[0]; x++){
-      his->SetBinContent(x, norm * block->GetData(x - 1) / MEV);
+      his->SetBinContent(x, norm * block->GetData(x - 1) );
     }
   }
   else if(dim == 2){
-    Double_t MICRON=1.;
-    TString UnitX=fHisUnit[0];
-    TString UnitY=fHisUnit[1];
-    
-    if ( !id.Contains("px_x") ){
-      MICRON=1.0e6; // meter to micron
-      UnitX="#mum";
-      UnitY="#mum";
-    }
     
     his = new TH2D(name, title,
-		   nBins[0], (fHisMin[0] - delta[0] + shift[0]) * MICRON , (fHisMax[0] + delta[0] + shift[0]) * MICRON ,
-		   nBins[1], (fHisMin[1] - delta[1] + shift[1]) * MICRON , (fHisMax[1] + delta[1] + shift[1]) * MICRON );
-    his->SetXTitle(fHisLabel[0] + " [" + UnitX + "]");
-    his->SetYTitle(fHisLabel[1] + " [" + UnitY + "]");
+		   nBins[0], fHisMin[0] - delta[0] + shift[0] , fHisMax[0] + delta[0] + shift[0] ,
+		   nBins[1], fHisMin[1] - delta[1] + shift[1] , fHisMax[1] + delta[1] + shift[1] );
+    his->SetXTitle(fHisLabel[0] + " [" + fHisUnit[0] + "]");
+    his->SetYTitle(fHisLabel[1] + " [" + fHisUnit[1] + "]");
     for(Int_t x = 1; x <= nBins[0]; x++){
       for(Int_t y = 1; y <= nBins[1]; y++){
 	Int_t i = (x - 1) + ((y - 1) * nBins[0]);
-	his->SetBinContent( x , y , norm * block->GetData(i) * (MICRON * MICRON) );
+	his->SetBinContent( x , y , norm * block->GetData(i) );
       }
     }
   }
