@@ -1,5 +1,5 @@
 #!/bin/bash
 
 cmake .  
-make  
+make -j3
 sudo make install
